@@ -1,4 +1,3 @@
-
 name: CI
 
 on:
@@ -10,47 +9,47 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-        
+        with:
+          fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          
-      - name: Cache dependencies
-        uses: actions/cache@v3
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-            
+
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
-          
+          pip install pytest coverage flake8 black bandit
+
       - name: Lint with flake8
         run: |
           flake8 src tests --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 src tests --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-          
+
       - name: Check code formatting with black
         run: |
           black --check src tests
-          
+
       - name: Security check with bandit
         run: |
           bandit -r src -f json -o bandit-report.json || true
           bandit -r src
-          
+
       - name: Run tests with pytest
         run: |
           pytest -v --cov=src --cov-report=xml --cov-report=html --cov-report=term
-          
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
@@ -58,7 +57,7 @@ jobs:
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: false
-          
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -72,4 +71,3 @@ jobs:
             -Dsonar.python.version=3.11
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.sourceEncoding=UTF-8
-
