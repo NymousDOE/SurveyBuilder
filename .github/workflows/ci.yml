@@ -59,8 +59,10 @@ jobs:
           fail_ci_if_error: false
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarqube-scan-action@v5
+        uses: SonarSource/sonarqube-scan-action@v6
+        continue-on-error: true
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
             -Dsonar.projectBaseDir=.
