@@ -1,6 +1,5 @@
 # Quick Start Guide
 
-## Setup
 
 ### 1. Clone the repository
 ```bash
