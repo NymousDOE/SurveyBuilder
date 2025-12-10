@@ -43,8 +43,9 @@ jobs:
 
       - name: Security check with bandit
         run: |
-          bandit -r src -f json -o bandit-report.json || true
-          bandit -r src
+            bandit -r src -f json -o bandit-report.json --exit-zero
+            bandit -r src --exit-zero
+
 
       - name: Run tests with pytest
         run: |
