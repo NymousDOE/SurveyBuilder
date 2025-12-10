@@ -59,18 +59,17 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
           
-      - name: SonarQube scan
+                  - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        env:
-          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_HOST_URL: ${{ vars.SONAR_HOST_URL || 'https://sonarcloud.io' }}
-        run: |
-          if [ -n "$SONAR_TOKEN" ]; then
-            pip install sonar-scanner-cli
-            sonar-scanner \
-              -Dsonar.projectKey=survey-builder-app \
-              -Dsonar.sources=src \
-              -Dsonar.tests=tests \
-              -Dsonar.python.version=3.11 \
-              -Dsonar.python.coverage.reportPaths=coverage.xml
-          fi
+        with:
+          organization: nymousdoe
+          projectKey: survey-builder-app
+          token: ${{ secrets.SONAR_TOKEN }}
+          extra_args: >-
+            -Dsonar.sources=src
+            -Dsonar.tests=tests
+            -Dsonar.python.version=3.11
+            -Dsonar.python.coverage.reportPaths=coverage.xml
+            -Dsonar.sourceEncoding=UTF-8
+
