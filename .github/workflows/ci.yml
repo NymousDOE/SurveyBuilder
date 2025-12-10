@@ -59,7 +59,7 @@ jobs:
           name: codecov-umbrella
           fail_ci_if_error: false
           
-                  - name: SonarCloud Scan
+      - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         with:
