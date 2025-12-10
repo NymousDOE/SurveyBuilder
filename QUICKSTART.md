@@ -29,7 +29,7 @@ The API will be available at `http://localhost:5000`
 
 ## Testing
 
-### Run all tests
+### RRun all tests
 ```bash
 pytest
 ```
