@@ -43,9 +43,8 @@ jobs:
 
       - name: Security check with bandit
         run: |
-            bandit -r src -f json -o bandit-report.json --exit-zero
-            bandit -r src --exit-zero
-
+          bandit -r src -f json -o bandit-report.json --exit-zero
+          bandit -r src --exit-zero
 
       - name: Run tests with pytest
         run: |
@@ -60,15 +59,8 @@ jobs:
           fail_ci_if_error: false
 
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: SonarSource/sonarqube-scan-action@v5
         with:
-          organization: nymousdoe
-          projectKey: survey-builder-app
-          token: ${{ secrets.SONAR_TOKEN }}
-          extra_args: >-
-            -Dsonar.sources=src
-            -Dsonar.tests=tests
-            -Dsonar.python.version=3.11
-            -Dsonar.python.coverage.reportPaths=coverage.xml
-            -Dsonar.sourceEncoding=UTF-8
+          args: >
+            -Dsonar.login=${{ secrets.SONAR_TOKEN }}
+            -Dsonar.projectBaseDir=.
