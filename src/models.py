@@ -1,7 +1,3 @@
-"""
-Data models for Survey Builder Application
-"""
-
 from datetime import datetime
 from enum import Enum
 from typing import List, Dict, Any, Optional
@@ -9,22 +5,18 @@ import uuid
 
 
 class SurveyStatus(Enum):
-    """Survey status enum"""
     DRAFT = "draft"
     PUBLISHED = "published"
     CLOSED = "closed"
 
 
 class QuestionType(Enum):
-    """Question type enum"""
     TEXT = "text"
     MULTIPLE_CHOICE = "multiple_choice"
     SCALE = "scale"
 
 
 class Question:
-    """Base question class"""
-    
     def __init__(
         self,
         question_type: QuestionType,
@@ -34,34 +26,27 @@ class Question:
         self.id = question_id or str(uuid.uuid4())
         self.type = question_type
         self.text = text
-        
+
     def to_dict(self) -> Dict[str, Any]:
-        """Convert question to dictionary"""
         return {
             "id": self.id,
             "type": self.type.value,
             "text": self.text
         }
-    
+
     def validate_answer(self, answer: Any) -> bool:
-        """Validate answer for this question type"""
         raise NotImplementedError
 
 
 class TextQuestion(Question):
-    """Open-ended text question"""
-    
     def __init__(self, text: str, question_id: Optional[str] = None):
         super().__init__(QuestionType.TEXT, text, question_id)
-    
+
     def validate_answer(self, answer: Any) -> bool:
-        """Text answers should be strings"""
         return isinstance(answer, str) and len(answer.strip()) > 0
 
 
 class MultipleChoiceQuestion(Question):
-    """Multiple choice question with predefined options"""
-    
     def __init__(
         self,
         text: str,
@@ -72,21 +57,17 @@ class MultipleChoiceQuestion(Question):
         if len(options) < 2:
             raise ValueError("Multiple choice question needs at least 2 options")
         self.options = options
-    
+
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary including options"""
         data = super().to_dict()
         data["options"] = self.options
         return data
-    
+
     def validate_answer(self, answer: Any) -> bool:
-        """Answer must be one of the predefined options"""
         return answer in self.options
 
 
 class ScaleQuestion(Question):
-    """Scale question (e.g., 1-5 rating)"""
-    
     def __init__(
         self,
         text: str,
@@ -99,16 +80,14 @@ class ScaleQuestion(Question):
             raise ValueError("min_value must be less than max_value")
         self.min_value = min_value
         self.max_value = max_value
-    
+
     def to_dict(self) -> Dict[str, Any]:
-        """Convert to dictionary including scale range"""
         data = super().to_dict()
         data["min_value"] = self.min_value
         data["max_value"] = self.max_value
         return data
-    
+
     def validate_answer(self, answer: Any) -> bool:
-        """Answer must be an integer within the scale range"""
         return (
             isinstance(answer, int) and
             self.min_value <= answer <= self.max_value
@@ -116,8 +95,6 @@ class ScaleQuestion(Question):
 
 
 class Survey:
-    """Survey containing multiple questions"""
-    
     def __init__(
         self,
         title: str,
@@ -131,44 +108,37 @@ class Survey:
         self.status = SurveyStatus.DRAFT
         self.created_at = datetime.utcnow()
         self.responses: List[Dict[str, Any]] = []
-    
+
     def add_question(self, question: Question) -> None:
-        """Add a question to the survey"""
         if self.status != SurveyStatus.DRAFT:
             raise ValueError("Cannot modify published survey")
         self.questions.append(question)
-    
+
     def remove_question(self, question_id: str) -> bool:
-        """Remove a question from the survey"""
         if self.status != SurveyStatus.DRAFT:
             raise ValueError("Cannot modify published survey")
-        
+
         for i, q in enumerate(self.questions):
             if q.id == question_id:
                 self.questions.pop(i)
                 return True
         return False
-    
+
     def publish(self) -> None:
-        """Publish the survey"""
         if len(self.questions) == 0:
             raise ValueError("Cannot publish survey without questions")
         self.status = SurveyStatus.PUBLISHED
-    
+
     def add_response(self, responses: Dict[str, Any]) -> str:
-        """Add a response to the survey"""
         if self.status != SurveyStatus.PUBLISHED:
             raise ValueError("Survey must be published to accept responses")
-        
-        # Validate all responses
+
         for question in self.questions:
             if question.id not in responses:
                 raise ValueError(f"Missing answer for question {question.id}")
             if not question.validate_answer(responses[question.id]):
-                raise ValueError(
-                    f"Invalid answer for question {question.id}"
-                )
-        
+                raise ValueError(f"Invalid answer for question {question.id}")
+
         response_id = str(uuid.uuid4())
         response_data = {
             "id": response_id,
@@ -177,30 +147,28 @@ class Survey:
         }
         self.responses.append(response_data)
         return response_id
-    
+
     def get_results(self) -> Dict[str, Any]:
-        """Get survey results and statistics"""
         results = {
             "survey_id": self.id,
             "title": self.title,
             "response_count": len(self.responses),
             "questions": []
         }
-        
+
         for question in self.questions:
             q_results = {
                 "question_id": question.id,
                 "text": question.text,
                 "type": question.type.value
             }
-            
+
             answers = [r["answers"][question.id] for r in self.responses]
-            
+
             if question.type == QuestionType.TEXT:
                 q_results["answer_count"] = len(answers)
-                
+
             elif question.type == QuestionType.MULTIPLE_CHOICE:
-                # Calculate distribution
                 distribution = {}
                 for opt in question.options:
                     count = answers.count(opt)
@@ -210,26 +178,22 @@ class Survey:
                         if answers else 0
                     }
                 q_results["distribution"] = distribution
-                
+
             elif question.type == QuestionType.SCALE:
-                # Calculate statistics
                 if answers:
-                    q_results["average"] = round(
-                        sum(answers) / len(answers), 2
-                    )
+                    q_results["average"] = round(sum(answers) / len(answers), 2)
                     q_results["min"] = min(answers)
                     q_results["max"] = max(answers)
                 else:
                     q_results["average"] = 0
                     q_results["min"] = 0
                     q_results["max"] = 0
-            
+
             results["questions"].append(q_results)
-        
+
         return results
-    
+
     def to_dict(self) -> Dict[str, Any]:
-        """Convert survey to dictionary"""
         return {
             "id": self.id,
             "title": self.title,
