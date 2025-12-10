@@ -10,8 +10,9 @@ from src.models import (
     MultipleChoiceQuestion,
     ScaleQuestion,
     QuestionType,
-    SurveyStatus
+    SurveyStatus,
 )
+
 
 class SurveyStorage:
     def __init__(self, storage_path: str = "surveys_data.json"):
@@ -39,11 +40,7 @@ class SurveyStorage:
         return False
 
     def add_question_to_survey(
-        self,
-        survey_id: str,
-        question_type: str,
-        text: str,
-        **kwargs
+        self, survey_id: str, question_type: str, text: str, **kwargs
     ) -> Question:
         survey = self.get_survey(survey_id)
         if not survey:
@@ -53,34 +50,22 @@ class SurveyStorage:
         self.save_to_file()
         return question
 
-    def _create_question(
-        self,
-        question_type: str,
-        text: str,
-        **kwargs
-    ) -> Question:
+    def _create_question(self, question_type: str, text: str, **kwargs) -> Question:
         q_type = QuestionType(question_type)
         if q_type == QuestionType.TEXT:
             return TextQuestion(text=text)
         elif q_type == QuestionType.MULTIPLE_CHOICE:
-            options = kwargs.get('options', [])
+            options = kwargs.get("options", [])
             return MultipleChoiceQuestion(text=text, options=options)
         elif q_type == QuestionType.SCALE:
-            min_val = kwargs.get('min_value', 1)
-            max_val = kwargs.get('max_value', 5)
-            return ScaleQuestion(
-                text=text,
-                min_value=min_val,
-                max_value=max_val
-            )
+            min_val = kwargs.get("min_value", 1)
+            max_val = kwargs.get("max_value", 5)
+            return ScaleQuestion(text=text, min_value=min_val, max_value=max_val)
         else:
             raise ValueError(f"Unknown question type: {question_type}")
 
     def save_to_file(self) -> None:
-        data = {
-            "surveys": [],
-            "saved_at": datetime.utcnow().isoformat()
-        }
+        data = {"surveys": [], "saved_at": datetime.utcnow().isoformat()}
         for survey in self.surveys.values():
             survey_data = {
                 "id": survey.id,
@@ -89,13 +74,13 @@ class SurveyStorage:
                 "status": survey.status.value,
                 "created_at": survey.created_at.isoformat(),
                 "questions": [],
-                "responses": survey.responses
+                "responses": survey.responses,
             }
             for question in survey.questions:
                 q_data = {
                     "id": question.id,
                     "type": question.type.value,
-                    "text": question.text
+                    "text": question.text,
                 }
                 if isinstance(question, MultipleChoiceQuestion):
                     q_data["options"] = question.options
@@ -104,25 +89,23 @@ class SurveyStorage:
                     q_data["max_value"] = question.max_value
                 survey_data["questions"].append(q_data)
             data["surveys"].append(survey_data)
-        with open(self.storage_path, 'w') as f:
+        with open(self.storage_path, "w") as f:
             json.dump(data, f, indent=2)
 
     def load_from_file(self) -> None:
         if not os.path.exists(self.storage_path):
             return
         try:
-            with open(self.storage_path, 'r') as f:
+            with open(self.storage_path, "r") as f:
                 data = json.load(f)
             for survey_data in data.get("surveys", []):
                 survey = Survey(
                     title=survey_data["title"],
                     description=survey_data["description"],
-                    survey_id=survey_data["id"]
+                    survey_id=survey_data["id"],
                 )
                 survey.status = SurveyStatus(survey_data["status"])
-                survey.created_at = datetime.fromisoformat(
-                    survey_data["created_at"]
-                )
+                survey.created_at = datetime.fromisoformat(survey_data["created_at"])
                 survey.responses = survey_data.get("responses", [])
                 for q_data in survey_data.get("questions", []):
                     question = self._restore_question(q_data)
@@ -134,27 +117,24 @@ class SurveyStorage:
     def _restore_question(self, q_data: Dict[str, Any]) -> Question:
         q_type = QuestionType(q_data["type"])
         if q_type == QuestionType.TEXT:
-            return TextQuestion(
-                text=q_data["text"],
-                question_id=q_data["id"]
-            )
+            return TextQuestion(text=q_data["text"], question_id=q_data["id"])
         elif q_type == QuestionType.MULTIPLE_CHOICE:
             return MultipleChoiceQuestion(
-                text=q_data["text"],
-                options=q_data["options"],
-                question_id=q_data["id"]
+                text=q_data["text"], options=q_data["options"], question_id=q_data["id"]
             )
         elif q_type == QuestionType.SCALE:
             return ScaleQuestion(
                 text=q_data["text"],
                 min_value=q_data["min_value"],
                 max_value=q_data["max_value"],
-                question_id=q_data["id"]
+                question_id=q_data["id"],
             )
         else:
             raise ValueError(f"Unknown question type: {q_data['type']}")
 
+
 _storage = None
+
 
 def get_storage() -> SurveyStorage:
     global _storage

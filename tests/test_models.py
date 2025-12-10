@@ -7,8 +7,9 @@ from src.models import (
     MultipleChoiceQuestion,
     ScaleQuestion,
     SurveyStatus,
-    QuestionType
+    QuestionType,
 )
+
 
 class TestTextQuestion:
     def test_create_text_question(self):
@@ -30,12 +31,10 @@ class TestTextQuestion:
         q = TextQuestion("What is your name?")
         assert q.validate_answer(123) is False
 
+
 class TestMultipleChoiceQuestion:
     def test_create_multiple_choice_question(self):
-        q = MultipleChoiceQuestion(
-            "Choose your color",
-            ["Red", "Blue", "Green"]
-        )
+        q = MultipleChoiceQuestion("Choose your color", ["Red", "Blue", "Green"])
         assert q.type == QuestionType.MULTIPLE_CHOICE
         assert len(q.options) == 3
 
@@ -44,19 +43,14 @@ class TestMultipleChoiceQuestion:
             MultipleChoiceQuestion("Choose", ["Only one"])
 
     def test_validate_valid_answer(self):
-        q = MultipleChoiceQuestion(
-            "Choose your color",
-            ["Red", "Blue", "Green"]
-        )
+        q = MultipleChoiceQuestion("Choose your color", ["Red", "Blue", "Green"])
         assert q.validate_answer("Red") is True
         assert q.validate_answer("Blue") is True
 
     def test_validate_invalid_answer(self):
-        q = MultipleChoiceQuestion(
-            "Choose your color",
-            ["Red", "Blue", "Green"]
-        )
+        q = MultipleChoiceQuestion("Choose your color", ["Red", "Blue", "Green"])
         assert q.validate_answer("Yellow") is False
+
 
 class TestScaleQuestion:
     def test_create_scale_question(self):
@@ -84,6 +78,7 @@ class TestScaleQuestion:
         q = ScaleQuestion("Rate", min_value=1, max_value=5)
         assert q.validate_answer(3.5) is False
         assert q.validate_answer("3") is False
+
 
 class TestSurvey:
     def test_create_survey(self):
@@ -137,10 +132,7 @@ class TestSurvey:
         s.add_question(q1)
         s.add_question(q2)
         s.publish()
-        response_id = s.add_response({
-            q1.id: "John Doe",
-            q2.id: 5
-        })
+        response_id = s.add_response({q1.id: "John Doe", q2.id: 5})
         assert response_id is not None
         assert len(s.responses) == 1
 

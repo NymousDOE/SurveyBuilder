@@ -5,14 +5,11 @@ import tempfile
 from src.storage import SurveyStorage
 from src.models import QuestionType
 
+
 class TestSurveyStorage:
     @pytest.fixture
     def temp_storage(self):
-        temp_file = tempfile.NamedTemporaryFile(
-            mode='w',
-            delete=False,
-            suffix='.json'
-        )
+        temp_file = tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".json")
         temp_file.close()
         storage = SurveyStorage(storage_path=temp_file.name)
         yield storage
@@ -20,10 +17,7 @@ class TestSurveyStorage:
             os.unlink(temp_file.name)
 
     def test_create_survey(self, temp_storage):
-        survey = temp_storage.create_survey(
-            "Test Survey",
-            "Description"
-        )
+        survey = temp_storage.create_survey("Test Survey", "Description")
         assert survey.title == "Test Survey"
         assert survey.description == "Description"
         assert survey.id in temp_storage.surveys
@@ -55,9 +49,7 @@ class TestSurveyStorage:
     def test_add_text_question(self, temp_storage):
         survey = temp_storage.create_survey("Test")
         question = temp_storage.add_question_to_survey(
-            survey.id,
-            "text",
-            "What is your name?"
+            survey.id, "text", "What is your name?"
         )
         assert question.type == QuestionType.TEXT
         assert question.text == "What is your name?"
@@ -69,7 +61,7 @@ class TestSurveyStorage:
             survey.id,
             "multiple_choice",
             "Choose color",
-            options=["Red", "Blue", "Green"]
+            options=["Red", "Blue", "Green"],
         )
         assert question.type == QuestionType.MULTIPLE_CHOICE
         assert len(question.options) == 3
@@ -77,11 +69,7 @@ class TestSurveyStorage:
     def test_add_scale_question(self, temp_storage):
         survey = temp_storage.create_survey("Test")
         question = temp_storage.add_question_to_survey(
-            survey.id,
-            "scale",
-            "Rate us",
-            min_value=1,
-            max_value=10
+            survey.id, "scale", "Rate us", min_value=1, max_value=10
         )
         assert question.type == QuestionType.SCALE
         assert question.min_value == 1
@@ -89,20 +77,11 @@ class TestSurveyStorage:
 
     def test_persistence(self, temp_storage):
         survey = temp_storage.create_survey("Test Survey")
+        temp_storage.add_question_to_survey(survey.id, "text", "Question 1")
         temp_storage.add_question_to_survey(
-            survey.id,
-            "text",
-            "Question 1"
+            survey.id, "multiple_choice", "Question 2", options=["A", "B", "C"]
         )
-        temp_storage.add_question_to_survey(
-            survey.id,
-            "multiple_choice",
-            "Question 2",
-            options=["A", "B", "C"]
-        )
-        new_storage = SurveyStorage(
-            storage_path=temp_storage.storage_path
-        )
+        new_storage = SurveyStorage(storage_path=temp_storage.storage_path)
         assert len(new_storage.surveys) == 1
         loaded_survey = new_storage.get_survey(survey.id)
         assert loaded_survey is not None
