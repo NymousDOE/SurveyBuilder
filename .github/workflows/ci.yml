@@ -44,7 +44,18 @@ jobs:
       - name: Security check with bandit
         run: |
           bandit -r src -f json -o bandit-report.json --exit-zero
+          bandit -r src -f txt -o bandit-report.txt --exit-zero
           bandit -r src --exit-zero
+
+      - name: Upload bandit security report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bandit-security-report
+          path: |
+            bandit-report.json
+            bandit-report.txt
+          retention-days: 30
 
       - name: Run tests with pytest
         run: |
